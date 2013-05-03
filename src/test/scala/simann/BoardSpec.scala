@@ -16,6 +16,10 @@ class BoardSpec extends Specification {
   }
 
   "Conflicts can be detected" in {
-    Board(1, 2, 3, 0).countDiagonalConflicts must be_=== (3)
+    Board(1, 2, 3, 0).countDiagonalConflicts must be_=== (4)
+  }
+
+  "No conflict board" in {
+    Board(3, 6, 2, 5, 1, 4, 0).countDiagonalConflicts must be_=== (0)
   }
 }

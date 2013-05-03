@@ -2,21 +2,20 @@ package simann
 
 import scalaz.effect.{IO, SafeApp}
 import scalaz.effect.IO.putStrLn
+import scalaz.Show
+import scalaz.std.anyVal._
+import scalaz.std.stream._
 import scalaz.syntax.equal._
+import scalaz.syntax.show._
 import scalaz.syntax.std.boolean._
 import scalaz.syntax.std.option._
-import scalaz.syntax.show._
-import scalaz.std.list._
-import scalaz.std.anyVal._
 import util.Random
 import annotation.tailrec
-import scalaz.std.stream._
-import scalaz.Show
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
-  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map{case (r, c) => countConflictsToNorthWest(r, c) + countConflictsToSouthWest(r, c)}.sum
+  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map{case (c, r) => countConflictsToNorthWest(r, c) + countConflictsToSouthWest(r, c)}.sum
   private def countConflictsToNorthWest(row: Int, col: Int) = countConflictsToWest(row, col, -1)
   private def countConflictsToSouthWest(row: Int, col: Int) = countConflictsToWest(row, col, 1)
   private def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
