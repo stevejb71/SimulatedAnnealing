@@ -47,11 +47,12 @@ object EightQueens extends SafeApp {
     putStrLn(solved.shows)
   }
 
-  private def solveBoard(board: Board): Board = ???
+  private def solveBoard(board: Board): Board = {
+    val energy = board.countDiagonalConflicts
+    ???
+  }
 
   private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => tweakBoard(b, random))
-
-  private[simann] def computeEnergy(board: Board): Int = ???
 
   @tailrec
   private def tweakBoard(board: Board, random: Random): Board = {
