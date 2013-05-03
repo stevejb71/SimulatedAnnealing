@@ -5,9 +5,9 @@ import scalaz.syntax.std.option._
 
 class BoardSpec extends Specification {
   "A board can be printed" in {
-    Board(List(2.some, None, 1.some)).toString must be_=== ("""|..Q
-                                                               |...
-                                                               |.Q.""".stripMargin)
+    Board(List(2, 0, 1)).toString must be_=== ("""|..Q
+                                                  |Q..
+                                                  |.Q.""".stripMargin)
 
   }
 }
