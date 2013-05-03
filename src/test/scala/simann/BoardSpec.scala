@@ -1,12 +1,13 @@
 package simann
 
 import org.specs2.mutable._
+import scalaz.syntax.show._
 
 class BoardSpec extends Specification {
   "A board can be printed" in {
-    Board(2, 0, 1).toString must be_=== ("""|..Q
-                                            |Q..
-                                            |.Q.""".stripMargin)
+    Board(2, 0, 1).shows must be_=== ("""|..Q
+                                         |Q..
+                                         |.Q.""".stripMargin)
 
   }
 

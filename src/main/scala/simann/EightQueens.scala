@@ -5,11 +5,13 @@ import scalaz.effect.IO.putStrLn
 import scalaz.syntax.equal._
 import scalaz.syntax.std.boolean._
 import scalaz.syntax.std.option._
+import scalaz.syntax.show._
 import scalaz.std.list._
 import scalaz.std.anyVal._
 import util.Random
 import annotation.tailrec
 import scalaz.std.stream._
+import scalaz.Show
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
@@ -22,16 +24,16 @@ case class Board(indicesAtRow: List[Int]) extends AnyVal {
     diagonalPositions.isEmpty ? 0 | diagonalPositions.tail.count{case (r, c) => hasQueen(r, c)}
   }
   private def hasQueen(row: Int, col: Int) = indicesAtRow(row) === col
-  override def toString = {
-    val blankRow = List.fill(size)('.')
-    val rows = indicesAtRow.toList.map(blankRow.updated(_, 'Q'))
-    rows.map(_.mkString).mkString("\n")
-  }
 }
 
 object Board {
   def apply(qs: Int*): Board = Board(qs.toList)
   def clean(size: Int) = Board((0 until size).toList)
+  implicit val showBoard = Show.shows((b: Board) => {
+    val blankRow = List.fill(b.size)('.')
+    val rows = b.indicesAtRow.toList.map(blankRow.updated(_, 'Q'))
+    rows.map(_.mkString).mkString("\n")
+  })
 }
 
 object EightQueens extends SafeApp {
@@ -42,11 +44,11 @@ object EightQueens extends SafeApp {
 
   override def runc: IO[Unit] = {
     val board = Board.clean(8)
-    val solved = solveBoard(board)
-    putStrLn(solved.toString)
+    val solved: Board = solveBoard(board)
+    putStrLn(solved.shows)
   }
 
-  private def solveBoard(board: Board) = ???
+  private def solveBoard(board: Board): Board = ???
 
   private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => tweakBoard(b, random))
 
