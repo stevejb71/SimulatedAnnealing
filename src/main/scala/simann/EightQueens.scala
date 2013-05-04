@@ -17,9 +17,7 @@ import annotation.tailrec
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
-  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map{case (c, r) => countConflictsToNorthWest(r, c) + countConflictsToSouthWest(r, c)}.sum
-  private def countConflictsToNorthWest(row: Int, col: Int) = countConflictsToWest(row, col, -1)
-  private def countConflictsToSouthWest(row: Int, col: Int) = countConflictsToWest(row, col, 1)
+  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map{case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1)}.sum
   private def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
     val diagonalPositions = unfold((row, col)){case (r, c) => (r >= 0 && c >= 0 && r < size) ? ((r, c), (r + dy, c - 1)).some | None}.toList
     diagonalPositions.isEmpty ? 0 | diagonalPositions.tail.count{case (r, c) => hasQueen(r, c)}
