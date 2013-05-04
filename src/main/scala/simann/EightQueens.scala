@@ -2,15 +2,7 @@ package simann
 
 import scalaz.effect.{IO, SafeApp}
 import scalaz.effect.IO.putStrLn
-import scalaz.Show
-import scalaz.std.anyVal._
-import scalaz.std.option._
-import scalaz.std.stream._
-import scalaz.syntax.equal._
-import scalaz.syntax.foldable._
-import scalaz.syntax.show._
-import scalaz.syntax.std.boolean._
-import scalaz.syntax.std.option._
+import scalaz._, Scalaz._
 import util.Random
 import annotation.tailrec
 
@@ -19,7 +11,7 @@ case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
   def countDiagonalConflicts = indicesAtRow.zipWithIndex.map{case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1)}.sum
   private def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
-    val diagonalPositions = unfold((row, col)){case (r, c) => (r >= 0 && c >= 0 && r < size) ? ((r, c), (r + dy, c - 1)).some | None}.toList
+    val diagonalPositions = unfold((row, col)){case (r, c) => (r >= 0 && c >= 0 && r < size) ?? ((r, c), (r + dy, c - 1)).some}.toList
     diagonalPositions.isEmpty ? 0 | diagonalPositions.tail.count{case (r, c) => hasQueen(r, c)}
   }
   private def hasQueen(row: Int, col: Int) = indicesAtRow(row) === col
@@ -55,7 +47,7 @@ object EightQueens extends SafeApp {
   def solveBoard(board: Board, random: Random): Option[Board] = {
     var bestBoard: Option[Board] = None
     var currentBoard = board
-    val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ? (t, (t * alpha)).some | None)
+    val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
     temperatures.foreach {temperature =>
       (0 until stepsPerChange).foreach {step =>
         val workingBoard = tweakBoard(currentBoard, random)
