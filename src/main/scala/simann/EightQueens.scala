@@ -49,7 +49,7 @@ object EightQueens extends SafeApp {
     var currentBoard = board
     val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
     temperatures.foreach {temperature =>
-      (0 until stepsPerChange).foreach {step =>
+      (0 until stepsPerChange).foreach {_ =>
         val workingBoard = tweakBoard(currentBoard, random)
         val workingEnergy = workingBoard.countDiagonalConflicts
         val currentEnergy = currentBoard.countDiagonalConflicts
