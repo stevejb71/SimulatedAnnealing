@@ -4,7 +4,6 @@ import scalaz.effect.{IO, SafeApp}
 import scalaz.effect.IO.putStrLn
 import scalaz._, Scalaz._
 import util.Random
-import annotation.tailrec
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
@@ -50,12 +49,32 @@ object EightQueens extends SafeApp {
     solveBoard(board, random)
   }
 
-  def solveBoard(board: Board, random: Random): Option[Board] = {
+  trait Annealable[B] {
+    def tweak(b: B, r: Random): B
+    def energy(b: B): Double
+  }
+
+  implicit val boardIsAnnealable = new Annealable[Board] {
+    def tweak(board: Board, random: Random): Board = {
+      // TODO: not functional
+      val x = random.nextInt(board.size - 1)
+      val y = random.nextInt(board.size - 1)
+      if (x === y) {
+        tweak(board, random)
+      } else {
+        board.swap(x, y)
+      }
+    }
+    def energy(b: Board): Double = b.countDiagonalConflicts
+  }
+
+  def solveBoard[B: Annealable](board: B, random: Random): Option[B] = {
+    val annealable = implicitly[Annealable[B]]
     val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
     val trialBoards = temperatures.map { temperature => {
-      def nextBoard(currentBoard: Board) = {
-        val workingBoard = tweakBoard(currentBoard, random)
-        val delta = workingBoard.countDiagonalConflicts - currentBoard.countDiagonalConflicts
+      def nextBoard(currentBoard: B) = {
+        val workingBoard = annealable.tweak(currentBoard, random)
+        val delta = annealable.energy(workingBoard) - annealable.energy(currentBoard)
         if (delta < 0) {
           workingBoard
         } else {
@@ -67,20 +86,8 @@ object EightQueens extends SafeApp {
 
       (0 until stepsPerChange).foldLeft(board){case (b, _) => nextBoard(b)}
     }}
-    trialBoards.find(_.countDiagonalConflicts === 0)
+    trialBoards.find(b => annealable.energy(b) === 0)
   }
 
-  private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => tweakBoard(b, random))
-
-  @tailrec
-  private def tweakBoard(board: Board, random: Random): Board = {
-    // TODO: not functional
-    val x = random.nextInt(board.size - 1)
-    val y = random.nextInt(board.size - 1)
-    if (x === y) {
-      tweakBoard(board, random)
-    } else {
-      board.swap(x, y)
-    }
-  }
+  private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => boardIsAnnealable.tweak(b, random))
 }
