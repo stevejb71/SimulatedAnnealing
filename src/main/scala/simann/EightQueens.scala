@@ -52,33 +52,30 @@ object EightQueens extends SafeApp {
   }
 
   def produceSolution(boardSize: Int, random: Random) = {
-    val board = Board.clean(boardSize)
+    val board = initialBoard(boardSize, random)
     solveBoard(board, random)
   }
 
   def solveBoard(board: Board, random: Random): Option[Board] = {
-    var currentBoard = board
     val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
     val trialBoards = temperatures.map { temperature => {
-        (0 until stepsPerChange).foreach { _ =>
-          val workingBoard = tweakBoard(currentBoard, random)
-            val workingEnergy = workingBoard.countDiagonalConflicts
-            val currentEnergy = currentBoard.countDiagonalConflicts
-            val useNew = if (workingEnergy < currentEnergy) {
-              true
-            } else {
-              val test = random.nextDouble()
-              val delta = workingEnergy - currentEnergy
-              val calc = math.exp(-delta / temperature)
-              calc > test
-            }
-            if (useNew) {
-              currentBoard = workingBoard
-            }
+      def step(currentBoard: Board) = {
+        val workingBoard = tweakBoard(currentBoard, random)
+        val workingEnergy = workingBoard.countDiagonalConflicts
+        val currentEnergy = currentBoard.countDiagonalConflicts
+        val useNew = if (workingEnergy < currentEnergy) {
+          true
+        } else {
+          val test = random.nextDouble()
+          val delta = workingEnergy - currentEnergy
+          val calc = math.exp(-delta / temperature)
+          calc > test
         }
-        currentBoard
+        useNew ? workingBoard | currentBoard
       }
-    }
+
+      (0 until stepsPerChange).foldLeft(board){case (b, _) => step(b)}
+    }}
     trialBoards.find(_.countDiagonalConflicts === 0)
   }
 
