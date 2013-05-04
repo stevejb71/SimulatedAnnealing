@@ -8,13 +8,8 @@ import annotation.tailrec
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
-
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
-
-  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map {
-    case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1)
-  }.sum
-
+  def countDiagonalConflicts = indicesAtRow.zipWithIndex.map { case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1) }.sum
   private def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
     val diagonalPositions = unfold((row, col)) {
       case (r, c) => (r >= 0 && c >= 0 && r < size) ?? ((r, c), (r + dy, c - 1)).some
@@ -23,7 +18,6 @@ case class Board(indicesAtRow: List[Int]) extends AnyVal {
       case (r, c) => hasQueen(r, c)
     }
   }
-
   private def hasQueen(row: Int, col: Int) = indicesAtRow(row) === col
 }
 
@@ -59,22 +53,19 @@ object EightQueens extends SafeApp {
   def solveBoard(board: Board, random: Random): Option[Board] = {
     val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
     val trialBoards = temperatures.map { temperature => {
-      def step(currentBoard: Board) = {
+      def nextBoard(currentBoard: Board) = {
         val workingBoard = tweakBoard(currentBoard, random)
-        val workingEnergy = workingBoard.countDiagonalConflicts
-        val currentEnergy = currentBoard.countDiagonalConflicts
-        val useNew = if (workingEnergy < currentEnergy) {
-          true
+        val delta = workingBoard.countDiagonalConflicts - currentBoard.countDiagonalConflicts
+        if (delta < 0) {
+          workingBoard
         } else {
           val test = random.nextDouble()
-          val delta = workingEnergy - currentEnergy
           val calc = math.exp(-delta / temperature)
-          calc > test
+          (calc > test) ? workingBoard | currentBoard
         }
-        useNew ? workingBoard | currentBoard
       }
 
-      (0 until stepsPerChange).foldLeft(board){case (b, _) => step(b)}
+      (0 until stepsPerChange).foldLeft(board){case (b, _) => nextBoard(b)}
     }}
     trialBoards.find(_.countDiagonalConflicts === 0)
   }
