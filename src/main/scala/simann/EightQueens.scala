@@ -78,7 +78,6 @@ object EightQueens extends SafeApp {
         temperature *= alpha
       }
     }
-    assert(bestBoard.foldMap(_.countDiagonalConflicts) === 0)
     bestBoard
   }
 
