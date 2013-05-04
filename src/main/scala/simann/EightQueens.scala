@@ -55,8 +55,8 @@ object EightQueens extends SafeApp {
   def solveBoard(board: Board, random: Random): Option[Board] = {
     var bestBoard: Option[Board] = None
     var currentBoard = board
-    var temperature = initialTemperature
-    while(temperature > finalTemperature) {
+    val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ? (t, (t * alpha)).some | None)
+    temperatures.foreach {temperature =>
       (0 until stepsPerChange).foreach {step =>
         val workingBoard = tweakBoard(currentBoard, random)
         val workingEnergy = workingBoard.countDiagonalConflicts
@@ -75,7 +75,6 @@ object EightQueens extends SafeApp {
             bestBoard = currentBoard.some
           }
         }
-        temperature *= alpha
       }
     }
     bestBoard
