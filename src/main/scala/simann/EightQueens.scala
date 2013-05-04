@@ -4,8 +4,10 @@ import scalaz.effect.{IO, SafeApp}
 import scalaz.effect.IO.putStrLn
 import scalaz.Show
 import scalaz.std.anyVal._
+import scalaz.std.option._
 import scalaz.std.stream._
 import scalaz.syntax.equal._
+import scalaz.syntax.foldable._
 import scalaz.syntax.show._
 import scalaz.syntax.std.boolean._
 import scalaz.syntax.std.option._
@@ -43,13 +45,40 @@ object EightQueens extends SafeApp {
 
   override def runc: IO[Unit] = {
     val board = Board.clean(8)
-    val solved: Board = solveBoard(board)
-    putStrLn(solved.shows)
+    val random = new util.Random(100)
+    val solved = solveBoard(board, random)
+    solved.map(s => putStrLn(s.shows)).getOrElse(IO())
   }
 
-  private def solveBoard(board: Board): Board = {
-    val energy = board.countDiagonalConflicts
-    ???
+  private def solveBoard(board: Board, random: Random): Option[Board] = {
+    var bestBoard: Option[Board] = None
+    var currentBoard = board
+    var temperature = initialTemperature
+    while(temperature > finalTemperature) {
+      println(s"Current temperature is $temperature")
+      (0 until stepsPerChange).foreach {step =>
+        val workingBoard = tweakBoard(currentBoard, random)
+        val workingEnergy = workingBoard.countDiagonalConflicts
+        val currentEnergy = currentBoard.countDiagonalConflicts
+        val useNew = if(workingEnergy < currentEnergy) {
+          true
+        } else {
+          val test = random.nextDouble()
+          val delta = workingEnergy - currentEnergy
+          val calc = math.exp(-delta / temperature)
+          calc > test
+        }
+        if(useNew) {
+          currentBoard = workingBoard
+          if(currentBoard.countDiagonalConflicts < bestBoard.map(_.countDiagonalConflicts).getOrElse(10000000)) {
+            bestBoard = currentBoard.some
+          }
+        }
+        temperature *= alpha
+      }
+    }
+    assert(bestBoard.foldMap(_.countDiagonalConflicts) === 0)
+    bestBoard
   }
 
   private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => tweakBoard(b, random))
