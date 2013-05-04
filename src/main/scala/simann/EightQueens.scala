@@ -44,18 +44,21 @@ object EightQueens extends SafeApp {
   private val stepsPerChange = 100
 
   override def runc: IO[Unit] = {
-    val board = Board.clean(8)
     val random = new util.Random(100)
-    val solved = solveBoard(board, random)
+    val solved = produceSolution(8, random)
     solved.map(s => putStrLn(s.shows)).getOrElse(IO())
   }
 
-  private def solveBoard(board: Board, random: Random): Option[Board] = {
+  def produceSolution(boardSize: Int, random: Random) = {
+    val board = Board.clean(boardSize)
+    solveBoard(board, random)
+  }
+
+  def solveBoard(board: Board, random: Random): Option[Board] = {
     var bestBoard: Option[Board] = None
     var currentBoard = board
     var temperature = initialTemperature
     while(temperature > finalTemperature) {
-      println(s"Current temperature is $temperature")
       (0 until stepsPerChange).foreach {step =>
         val workingBoard = tweakBoard(currentBoard, random)
         val workingEnergy = workingBoard.countDiagonalConflicts
