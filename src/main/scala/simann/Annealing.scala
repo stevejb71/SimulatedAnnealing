@@ -14,21 +14,21 @@ object Annealing {
   def anneal[A: Annealable](start: A, random: Random, config: AnnealingConfig): Option[A] = {
     val annealable = implicitly[Annealable[A]]
     val temperatures = unfold(config.initialTemperature)(t => (t > config.finalTemperature) ?? (t, (t * config.alpha)).some)
+    def acceptanceProbability(temperature: Double) = (d: Double) => math.exp(-d / temperature)
     val trialSolutions = temperatures.map { temperature => {
-      (0 until config.stepsPerChange).foldLeft(start){case (a, _) => next(a, temperature, random)}
+      (0 until config.stepsPerChange).foldLeft(start){case (a, _) => oneStep(a, acceptanceProbability(temperature), random, annealable)}
     }}
     trialSolutions.find(a => annealable.energy(a) === 0)
   }
 
-  def next[A: Annealable](current: A, temperature: Double, random: Random) = {
-    val annealable = implicitly[Annealable[A]]
+  def oneStep[A](current: A, acceptanceProbability: Double => Double, random: Random, annealable: Annealable[A]) = {
     val tweaked = annealable.tweak(current, random)
     val delta = annealable.energy(tweaked) - annealable.energy(current)
     if (delta < 0) {
       tweaked
     } else {
       val test = random.nextDouble()
-      val calc = math.exp(-delta / temperature)
+      val calc = acceptanceProbability(delta)
       (calc > test) ? tweaked | current
     }
   }
