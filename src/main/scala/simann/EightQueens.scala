@@ -45,11 +45,11 @@ object EightQueens extends SafeApp {
   }
 
   implicit val boardIsAnnealable = new Annealable[Board] {
-    def tweak(board: Board, random: Random): Board = {
-      val x = random.nextInt(board.size - 1)
-      val y = random.nextInt(board.size - 1)
+    def tweak(board: Board, nextInt: Int => Int): Board = {
+      val x = nextInt(board.size - 1)
+      val y = nextInt(board.size - 1)
       if (x === y) {
-        tweak(board, random)
+        tweak(board, nextInt)
       } else {
         board.swap(x, y)
       }
@@ -57,5 +57,5 @@ object EightQueens extends SafeApp {
     def energy(b: Board): Double = b.countDiagonalConflicts
   }
 
-  private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => boardIsAnnealable.tweak(b, random))
+  private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => boardIsAnnealable.tweak(b, random.nextInt _))
 }

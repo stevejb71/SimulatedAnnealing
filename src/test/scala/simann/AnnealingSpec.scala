@@ -1,18 +1,23 @@
 package simann
 
 import org.specs2.mutable._
-import util.Random
 
 class AnnealingSpec extends Specification {
-  "next returns tweaked if it's better than current" in {
-    val acceptanceProbability = (x: Double) => x
-    val random = new Random(100)
-    val annealable = new Annealable[Int] {
-      def tweak(a: Int, r: Random): Int = 50
-      def energy(a: Int): Double = a * 10.0
-    }
+  private val nextDouble = () => 1.0
+  private val energy = (a: Int) =>  a * 10.0
 
-    Annealing.oneStep(100, acceptanceProbability, random, annealable) must be_=== (50)
+  "choose returns tweaked if it's better than current" in {
+    val acceptanceProbability = (x: Double) => x
+    Annealing.choose(50, 100, acceptanceProbability, nextDouble, energy) must be_=== (50)
   }
 
+  "choose returns tweaked if its worse but the temperature is greater than the threshold" in {
+    val acceptanceProbability = Map(500.0 -> 1.1)
+    Annealing.choose(150, 100, acceptanceProbability, nextDouble, energy) must be_=== (150)
+  }
+
+  "choose returns current if tweaked is worse and the temperature is not greater than the threshold" in {
+    val acceptanceProbability = Map(500.0 -> 1.0)
+    Annealing.choose(150, 100, acceptanceProbability, nextDouble, energy) must be_=== (100)
+  }
 }

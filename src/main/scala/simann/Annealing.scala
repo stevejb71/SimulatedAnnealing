@@ -4,7 +4,7 @@ import scalaz.Scalaz._
 import util.Random
 
 trait Annealable[A] {
-  def tweak(a: A, r: Random): A
+  def tweak(a: A, nextInt: Int => Int): A
   def energy(a: A): Double
 }
 
@@ -21,15 +21,19 @@ object Annealing {
     trialSolutions.find(a => annealable.energy(a) === 0)
   }
 
-  def oneStep[A](current: A, acceptanceProbability: Double => Double, random: Random, annealable: Annealable[A]) = {
-    val tweaked = annealable.tweak(current, random)
-    val delta = annealable.energy(tweaked) - annealable.energy(current)
+  def oneStep[A](current: A, acceptanceProbability: Double => Double, random: Random, annealable: Annealable[A]): A = {
+    val tweaked = annealable.tweak(current, random.nextInt _)
+    choose(tweaked, current, acceptanceProbability, random.nextDouble _, annealable.energy _)
+  }
+
+  def choose[A](tweaked: A, current: A, acceptanceProbability: Double => Double, nextDouble: () => Double, energy: A => Double) = {
+    val delta = energy(tweaked) - energy(current)
     if (delta < 0) {
       tweaked
     } else {
-      val test = random.nextDouble()
-      val calc = acceptanceProbability(delta)
-      (calc > test) ? tweaked | current
+      val threshold = nextDouble()
+      val temperature = acceptanceProbability(delta)
+      (temperature > threshold) ? tweaked | current
     }
   }
 }
