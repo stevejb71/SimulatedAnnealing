@@ -11,7 +11,7 @@ class AnnealingSpec extends Specification {
     Annealing.choose(50, 100, acceptanceProbability, nextDouble, energy) must be_=== (50)
   }
 
-  "choose returns tweaked if its worse but the temperature is greater than the threshold" in {
+  "choose returns tweaked if it's worse but the temperature is greater than the threshold" in {
     val acceptanceProbability = Map(500.0 -> 1.1)
     Annealing.choose(150, 100, acceptanceProbability, nextDouble, energy) must be_=== (150)
   }
