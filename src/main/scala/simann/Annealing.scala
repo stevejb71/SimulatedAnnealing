@@ -1,7 +1,7 @@
 package simann
 
-import scala.util.Random
 import scalaz.Scalaz._
+import util.Random
 
 trait Annealable[A] {
   def tweak(a: A, r: Random): A
