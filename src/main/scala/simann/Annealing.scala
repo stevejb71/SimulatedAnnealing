@@ -11,25 +11,25 @@ trait Annealable[A] {
 case class AnnealingConfig(initialTemperature: Double, finalTemperature:Double, alpha: Double, stepsPerChange: Int)
 
 object Annealing {
-  def anneal[A: Annealable](board: A, random: Random, config: AnnealingConfig): Option[A] = {
+  def anneal[A: Annealable](start: A, random: Random, config: AnnealingConfig): Option[A] = {
     val annealable = implicitly[Annealable[A]]
     val temperatures = unfold(config.initialTemperature)(t => (t > config.finalTemperature) ?? (t, (t * config.alpha)).some)
-    val trialBoards = temperatures.map { temperature => {
-      def nextBoard(currentBoard: A) = {
-        val workingBoard = annealable.tweak(currentBoard, random)
-        val delta = annealable.energy(workingBoard) - annealable.energy(currentBoard)
+    val trialSolutions = temperatures.map { temperature => {
+      def next(current: A) = {
+        val tweaked = annealable.tweak(current, random)
+        val delta = annealable.energy(tweaked) - annealable.energy(current)
         if (delta < 0) {
-          workingBoard
+          tweaked
         } else {
           val test = random.nextDouble()
           val calc = math.exp(-delta / temperature)
-          (calc > test) ? workingBoard | currentBoard
+          (calc > test) ? tweaked | current
         }
       }
 
-      (0 until config.stepsPerChange).foldLeft(board){case (b, _) => nextBoard(b)}
+      (0 until config.stepsPerChange).foldLeft(start){case (a, _) => next(a)}
     }}
-    trialBoards.find(b => annealable.energy(b) === 0)
+    trialSolutions.find(a => annealable.energy(a) === 0)
   }
 
 
