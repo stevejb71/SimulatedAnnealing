@@ -33,11 +33,6 @@ object Board {
 }
 
 object EightQueens extends SafeApp {
-  private val initialTemperature = 30.0
-  private val finalTemperature = 0.5
-  private val alpha = 0.99
-  private val stepsPerChange = 100
-
   override def runc: IO[Unit] = {
     val random = new util.Random(100)
     val solved = produceSolution(8, random)
@@ -46,17 +41,11 @@ object EightQueens extends SafeApp {
 
   def produceSolution(boardSize: Int, random: Random) = {
     val board = initialBoard(boardSize, random)
-    solveBoard(board, random)
-  }
-
-  trait Annealable[B] {
-    def tweak(b: B, r: Random): B
-    def energy(b: B): Double
+    Annealing.anneal(board, random, AnnealingConfig(30.0, 0.5, 0.99, 100))
   }
 
   implicit val boardIsAnnealable = new Annealable[Board] {
     def tweak(board: Board, random: Random): Board = {
-      // TODO: not functional
       val x = random.nextInt(board.size - 1)
       val y = random.nextInt(board.size - 1)
       if (x === y) {
@@ -66,27 +55,6 @@ object EightQueens extends SafeApp {
       }
     }
     def energy(b: Board): Double = b.countDiagonalConflicts
-  }
-
-  def solveBoard[B: Annealable](board: B, random: Random): Option[B] = {
-    val annealable = implicitly[Annealable[B]]
-    val temperatures = unfold(initialTemperature)(t => (t > finalTemperature) ?? (t, (t * alpha)).some)
-    val trialBoards = temperatures.map { temperature => {
-      def nextBoard(currentBoard: B) = {
-        val workingBoard = annealable.tweak(currentBoard, random)
-        val delta = annealable.energy(workingBoard) - annealable.energy(currentBoard)
-        if (delta < 0) {
-          workingBoard
-        } else {
-          val test = random.nextDouble()
-          val calc = math.exp(-delta / temperature)
-          (calc > test) ? workingBoard | currentBoard
-        }
-      }
-
-      (0 until stepsPerChange).foldLeft(board){case (b, _) => nextBoard(b)}
-    }}
-    trialBoards.find(b => annealable.energy(b) === 0)
   }
 
   private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => boardIsAnnealable.tweak(b, random))
