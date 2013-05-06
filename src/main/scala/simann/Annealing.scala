@@ -8,15 +8,19 @@ trait Annealable[A] {
   def energy(a: A): Double
 }
 
-case class AnnealingConfig(initialTemperature: Double, finalTemperature:Double, alpha: Double, stepsPerChange: Int)
+case class AnnealingConfig(initialTemperature: Double, finalTemperature: Double, temperatureDrop: Double, stepsAtEachTemperature: Int)
 
 object Annealing {
   def anneal[A: Annealable](start: A, random: Random, config: AnnealingConfig): Option[A] = {
+    val temperatures = unfold(config.initialTemperature)(t => (t > config.finalTemperature) ?? (t, (t * config.temperatureDrop)).some)
+    anneal(start, random, temperatures, config.stepsAtEachTemperature)
+  }
+
+  def anneal[A: Annealable](start: A, random: Random, temperatures: Stream[Double], stepsAtEachTemperature: Int): Option[A] = {
     val annealable = implicitly[Annealable[A]]
-    val temperatures = unfold(config.initialTemperature)(t => (t > config.finalTemperature) ?? (t, (t * config.alpha)).some)
     def acceptanceProbability(temperature: Double) = (d: Double) => math.exp(-d / temperature)
     val trialSolutions = temperatures.map { temperature => {
-      (0 until config.stepsPerChange).foldLeft(start){case (current, _) => {
+      (0 until stepsAtEachTemperature).foldLeft(start){case (current, _) => {
         val trialSolution = annealable.heat(current, random.nextInt _)
         choose(trialSolution, current, acceptanceProbability(temperature), random.nextDouble _, annealable.energy _)
       }}
