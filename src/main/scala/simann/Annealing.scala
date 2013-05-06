@@ -8,21 +8,27 @@ trait Annealable[A] {
   def energy(a: A): Double
 }
 
-case class AnnealingConfig(initialTemperature: Double, finalTemperature: Double, temperatureDrop: Double, stepsAtEachTemperature: Int)
+case class Temperature(value: Double) extends AnyVal {
+  def *(x: Double) = Temperature(value * x)
+}
+
+case class AnnealingConfig(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double, stepsAtEachTemperature: Int)
 
 object Annealing {
   def anneal[A: Annealable](start: A, random: Random, config: AnnealingConfig): Option[A] = {
-    val temperatures = unfold(config.initialTemperature)(t => (t > config.finalTemperature) ?? (t, (t * config.temperatureDrop)).some)
-    anneal(start, random, temperatures, config.stepsAtEachTemperature)
+    val annealable = implicitly[Annealable[A]]
+    val temperatures = unfold(config.initialTemperature)(t => (t.value > config.finalTemperature.value) ? (t, (t * config.temperatureDropRatio)).some | None)
+    def acceptanceProbability(temperature: Temperature) = (d: Double) => math.exp(-d / temperature.value)
+    val chooseTrialOrCurrent = (trialSolution: A, current: A, temperature: Temperature) => choose(trialSolution, current, acceptanceProbability(temperature), random.nextDouble _, annealable.energy _)
+    anneal(start, random, temperatures, chooseTrialOrCurrent, config.stepsAtEachTemperature)
   }
 
-  def anneal[A: Annealable](start: A, random: Random, temperatures: Stream[Double], stepsAtEachTemperature: Int): Option[A] = {
+  def anneal[A: Annealable](start: A, random: Random, temperatures: Stream[Temperature], chooseTrialOrCurrent: (A, A, Temperature) => A, stepsAtEachTemperature: Int): Option[A] = {
     val annealable = implicitly[Annealable[A]]
-    def acceptanceProbability(temperature: Double) = (d: Double) => math.exp(-d / temperature)
     val trialSolutions = temperatures.map { temperature => {
       (0 until stepsAtEachTemperature).foldLeft(start){case (current, _) => {
         val trialSolution = annealable.heat(current, random.nextInt _)
-        choose(trialSolution, current, acceptanceProbability(temperature), random.nextDouble _, annealable.energy _)
+        chooseTrialOrCurrent(trialSolution, current, temperature)
       }}
     }}
     trialSolutions.find(a => annealable.energy(a) === 0)

@@ -55,7 +55,7 @@ object EightQueens extends SafeApp {
 
   def produceSolution(boardSize: Int, random: Random) = {
     val board = initialBoard(boardSize, random)
-    Annealing.anneal(board, random, AnnealingConfig(30.0, 0.5, 0.99, 100))
+    Annealing.anneal(board, random, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100))
   }
 
   private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => implicitly[Annealable[Board]].heat(b, random.nextInt _))
