@@ -4,6 +4,8 @@ import org.specs2.mutable._
 import scalaz.syntax.show._
 
 class BoardSpec extends Specification {
+  private val annealable = implicitly[Annealable[Board]]
+
   "A board can be printed" in {
     Board(2, 0, 1).shows must be_=== ("""|..Q
                                          |Q..
@@ -16,10 +18,10 @@ class BoardSpec extends Specification {
   }
 
   "Conflicts can be detected" in {
-    Board(1, 2, 3, 0).countDiagonalConflicts must be_=== (4)
+    annealable.energy(Board(1, 2, 3, 0)) must be_=== (4)
   }
 
   "No conflict board" in {
-    Board(3, 6, 2, 5, 1, 4, 0).countDiagonalConflicts must be_=== (0)
+    annealable.energy(Board(3, 6, 2, 5, 1, 4, 0)) must be_=== (0)
   }
 }
