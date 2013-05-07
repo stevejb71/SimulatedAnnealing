@@ -1,7 +1,6 @@
 package simann
 
 import scalaz.Scalaz._
-import util.Random
 
 trait Annealable[A] {
   def heat(a: A, nextInt: Int => Int): A
@@ -15,7 +14,7 @@ case class Temperature(value: Double) extends AnyVal {
 case class AnnealingConfig(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double, stepsAtEachTemperature: Int)
 
 object Annealing {
-  def anneal[A: Annealable](start: A, random: Random, config: AnnealingConfig): Option[A] = {
+  def anneal[A: Annealable](start: A, random: util.Random, config: AnnealingConfig): Option[A] = {
     val annealable = implicitly[Annealable[A]]
     val temperatures = unfold(config.initialTemperature)(t => (t.value > config.finalTemperature.value) ? (t, (t * config.temperatureDropRatio)).some | None)
     def acceptanceProbability(temperature: Temperature) = (d: Double) => math.exp(-d / temperature.value)
@@ -23,7 +22,7 @@ object Annealing {
     anneal(start, random, temperatures, chooseTrialOrCurrent, config.stepsAtEachTemperature)
   }
 
-  def anneal[A: Annealable](start: A, random: Random, temperatures: Stream[Temperature], chooseTrialOrCurrent: (A, A, Temperature) => A, stepsAtEachTemperature: Int): Option[A] = {
+  def anneal[A: Annealable](start: A, random: util.Random, temperatures: Stream[Temperature], chooseTrialOrCurrent: (A, A, Temperature) => A, stepsAtEachTemperature: Int): Option[A] = {
     val annealable = implicitly[Annealable[A]]
     val trialSolutions = temperatures.map { temperature => {
       (0 until stepsAtEachTemperature).foldLeft(start){case (current, _) => {

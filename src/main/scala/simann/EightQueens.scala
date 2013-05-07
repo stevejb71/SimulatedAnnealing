@@ -3,7 +3,6 @@ package simann
 import scalaz.effect.{IO, SafeApp}
 import scalaz.effect.IO.putStrLn
 import scalaz._, Scalaz._
-import util.Random
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
@@ -53,10 +52,10 @@ object EightQueens extends SafeApp {
     solved.map(s => putStrLn(s.shows)).getOrElse(IO())
   }
 
-  def produceSolution(boardSize: Int, random: Random) = {
+  def produceSolution(boardSize: Int, random: util.Random) = {
     val board = initialBoard(boardSize, random)
     Annealing.anneal(board, random, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100))
   }
 
-  private[simann] def initialBoard(size: Int, random: Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => implicitly[Annealable[Board]].heat(b, random.nextInt _))
+  private[simann] def initialBoard(size: Int, random: util.Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => implicitly[Annealable[Board]].heat(b, random.nextInt _))
 }

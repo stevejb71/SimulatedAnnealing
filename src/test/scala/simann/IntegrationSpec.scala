@@ -1,7 +1,6 @@
 package simann
 
 import org.specs2.mutable._
-import util.Random
 import scalaz.syntax.std.option._
 
 class IntegrationSpec extends Specification {
@@ -15,7 +14,7 @@ class IntegrationSpec extends Specification {
 
   private def produceSolutionAndCheck(boardSize: Int, random: Int, expected: Board) {
     implicitly[Annealable[Board]].energy(expected) must be_===(0)
-    val solution = EightQueens.produceSolution(boardSize, new Random(random))
+    val solution = EightQueens.produceSolution(boardSize, new util.Random(random))
     solution must_== expected.some
   }
 }
