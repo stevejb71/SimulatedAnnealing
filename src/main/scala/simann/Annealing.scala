@@ -1,6 +1,7 @@
 package simann
 
 import scalaz.Scalaz._
+import scalaz.State
 
 trait Annealable[A] {
   def heat(a: A, nextInt: Int => Int): A
@@ -14,12 +15,12 @@ case class Temperature(value: Double) extends AnyVal {
 case class AnnealingConfig(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double, stepsAtEachTemperature: Int)
 
 object Annealing {
-  def anneal[A: Annealable](start: A, random: util.Random, config: AnnealingConfig): Option[A] = {
+  def anneal[A: Annealable](start: A, random: util.Random, config: AnnealingConfig): State[Random, Option[A]] = State {r =>
     val annealable = implicitly[Annealable[A]]
     val temperatures = unfold(config.initialTemperature)(t => (t.value > config.finalTemperature.value) ? (t, (t * config.temperatureDropRatio)).some | None)
     def acceptanceProbability(temperature: Temperature) = (d: Double) => math.exp(-d / temperature.value)
     val chooseTrialOrCurrent = (trialSolution: A, current: A, temperature: Temperature) => choose(trialSolution, current, acceptanceProbability(temperature), random.nextDouble _, annealable.energy _)
-    anneal(start, random, temperatures, chooseTrialOrCurrent, config.stepsAtEachTemperature)
+    (r, anneal(start, random, temperatures, chooseTrialOrCurrent, config.stepsAtEachTemperature))
   }
 
   def anneal[A: Annealable](start: A, random: util.Random, temperatures: Stream[Temperature], chooseTrialOrCurrent: (A, A, Temperature) => A, stepsAtEachTemperature: Int): Option[A] = {

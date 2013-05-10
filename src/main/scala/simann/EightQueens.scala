@@ -49,7 +49,7 @@ object EightQueens extends SafeApp {
   override def runc: IO[Unit] = {
     val random = new util.Random(100)
     val solved = produceSolution(8, random)
-    solved.map(s => putStrLn(s.shows)).getOrElse(IO())
+    solved.map(_.map(s => putStrLn(s.shows))).eval(Random(1000)).getOrElse(IO(()))
   }
 
   def produceSolution(boardSize: Int, random: util.Random) = {

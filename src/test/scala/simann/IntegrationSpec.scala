@@ -14,7 +14,7 @@ class IntegrationSpec extends Specification {
 
   private def produceSolutionAndCheck(boardSize: Int, random: Int, expected: Board) {
     implicitly[Annealable[Board]].energy(expected) must be_===(0)
-    val solution = EightQueens.produceSolution(boardSize, new util.Random(random))
+    val solution = EightQueens.produceSolution(boardSize, new util.Random(random)).eval(Random(random))
     solution must_== expected.some
   }
 }
