@@ -61,5 +61,5 @@ object EightQueens extends SafeApp {
     solution
   }
 
-  private[simann] def initialBoard(size: Int): State[Random, Board] = Annealing.loopS(Board.clean(size))(size, Board.boardIsAnnealable.heat _)
+  private[simann] def initialBoard(size: Int): State[Random, Board] = Looping.loopS(Board.clean(size))(size, Board.boardIsAnnealable.heat _)
 }
