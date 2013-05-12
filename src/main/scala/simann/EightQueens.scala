@@ -22,14 +22,12 @@ object Board {
   })
 
   implicit val boardIsAnnealable = new Annealable[Board] {
-    def heat(board: Board, nextInt: Int => Int): Board = {
-      val x = nextInt(board.size - 1)
-      val y = nextInt(board.size - 1)
-      if (x === y) {
-        heat(board, nextInt)
-      } else {
-        board.swap(x, y)
-      }
+    def heat(board: Board): State[Random, Board] = {
+      for {
+        x <- Random.nextInt(board.size - 1)
+        y <- Random.nextInt(board.size - 1)
+        heated <- (x === y) ? heat(board) | board.swap(x, y).pure[({type M[B] = State[Random, B]})#M]
+      } yield heated
     }
     def energy(b: Board): Double = {
       def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
@@ -47,15 +45,17 @@ object Board {
 
 object EightQueens extends SafeApp {
   override def runc: IO[Unit] = {
-    val random = new util.Random(100)
-    val solved = produceSolution(8, random)
+    val solved = produceSolution(8)
     solved.map(_.map(s => putStrLn(s.shows))).eval(Random(1000)).getOrElse(IO(()))
   }
 
-  def produceSolution(boardSize: Int, random: util.Random) = {
-    val board = initialBoard(boardSize, random)
-    Annealing.anneal(board, random, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100))
-  }
+  def produceSolution(boardSize: Int): State[Random, Option[Board]] =
+   initialBoard(boardSize).flatMap(board => Annealing.anneal(board, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100)))
 
-  private[simann] def initialBoard(size: Int, random: util.Random): Board = (1 to size).foldLeft(Board.clean(size))((b, _) => implicitly[Annealable[Board]].heat(b, random.nextInt _))
+  private[simann] def initialBoard(size: Int): State[Random, Board] = {
+    (1 to size).toList.foldLeftM[({type M[B] = State[Random, B]})#M, Board](Board.clean(size))((b, _) => {
+      val annealable = implicitly[Annealable[Board]]
+      annealable.heat(b)
+    })
+  }
 }
