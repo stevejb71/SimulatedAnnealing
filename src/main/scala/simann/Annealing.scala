@@ -34,14 +34,14 @@ object Annealing {
     (r, trialSolutions.find(a => annealable.energy(a) === 0))
   }
 
-  def choose[A](trialSolution: A, current: A, acceptanceProbability: Double => Double, nextDouble: () => Double, energy: A => Double) = {
+  def choose[A](trialSolution: A, current: A, acceptanceProbability: Double => Double, nextDouble: () => Double, energy: A => Double): A = {
     val improvement = energy(trialSolution) - energy(current)
     if (improvement < 0) {
       trialSolution
     } else {
       val threshold = nextDouble()
-      val temperature = acceptanceProbability(improvement)
-      (temperature > threshold) ? trialSolution | current
+      val calc = acceptanceProbability(improvement)
+      (calc > threshold) ? trialSolution | current
     }
   }
 }
