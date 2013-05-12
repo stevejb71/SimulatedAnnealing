@@ -44,9 +44,9 @@ object Board {
 }
 
 object EightQueens extends SafeApp {
-  override def runc: IO[Unit] = {
-    val solved = produceSolution(8)
-    solved.map(_.map(s => putStrLn(s.shows))).eval(Random(1000)).getOrElse(IO(()))
+  override def runc: IO[Unit] = RandomIO.random.flatMap {random =>
+    val result = produceSolution(8).eval(random).map(_.shows).getOrElse("No solution found")
+    putStrLn(result)
   }
 
   def produceSolution(boardSize: Int): State[Random, Option[Board]] =
