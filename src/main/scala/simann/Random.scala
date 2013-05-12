@@ -5,9 +5,7 @@ import scalaz._, Scalaz._, effect.IO
 case class Random(seed: Long)
 
 object Time {
-  val currentTimeMillis = IO {
-    System.currentTimeMillis()
-  }
+  val currentTimeMillis = IO { System.currentTimeMillis() }
 }
 
 object RandomIO {
@@ -24,7 +22,7 @@ object Random {
     if ((n & -n) === n) {
       next(31).map((n: Int) => ((n * next(31).asInstanceOf[Long]) >> 31).asInstanceOf[Int])
     } else {
-      def loop: State[Random, Int] = {
+      lazy val loop: State[Random, Int] = {
         val bits = next(31)
         val result = bits.map(_ % n)
         val tryAgain = for {
@@ -44,9 +42,10 @@ object Random {
     n27 <- next(27)
   } yield ((n26 + n27) / (1L << 53).asInstanceOf[Double])
 
-  private def next(bits: Int): State[Random, Int] = State { r =>
-    val mask = (1L << 48) - 1
-    val nextSeed = (r.seed * 0x5DEECE66DL + 0xBL) & mask
-    (Random(nextSeed), (nextSeed >>> (48 - bits)).asInstanceOf[Int])
+  private def next(bits: Int): State[Random, Int] = State {
+    r =>
+      val mask = (1L << 48) - 1
+      val nextSeed = (r.seed * 0x5DEECE66DL + 0xBL) & mask
+      (Random(nextSeed), (nextSeed >>> (48 - bits)).asInstanceOf[Int])
   }
 }
