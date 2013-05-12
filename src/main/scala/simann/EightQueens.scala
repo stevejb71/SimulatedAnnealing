@@ -6,7 +6,9 @@ import scalaz._, Scalaz._
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
+
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
+
   def hasQueen(row: Int, col: Int) = indicesAtRow(row) === col
 }
 
@@ -22,13 +24,12 @@ object Board {
   })
 
   implicit val boardIsAnnealable = new Annealable[Board] {
-    def heat(board: Board): State[Random, Board] = {
-      for {
-        x <- Random.nextInt(board.size - 1)
-        y <- Random.nextInt(board.size - 1)
-        heated <- (x === y) ? heat(board) | board.swap(x, y).pure[({type M[B] = State[Random, B]})#M]
-      } yield heated
-    }
+    def heat(board: Board): State[Random, Board] = for {
+      x <- Random.nextInt(board.size - 1)
+      y <- Random.nextInt(board.size - 1)
+      heated <- (x === y) ? heat(board) | board.swap(x, y).pure[({type M[B] = State[Random, B]})#M]
+    } yield heated
+
     def energy(b: Board): Double = {
       def countConflictsToWest(row: Int, col: Int, dy: Int): Int = {
         val diagonalPositions = unfold((row, col)) {
@@ -38,7 +39,9 @@ object Board {
           case (r, c) => b.hasQueen(r, c)
         }
       }
-      b.indicesAtRow.zipWithIndex.map { case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1) }.sum
+      b.indicesAtRow.zipWithIndex.map {
+        case (c, r) => countConflictsToWest(r, c, -1) + countConflictsToWest(r, c, 1)
+      }.sum
     }
   }
 }
@@ -50,7 +53,7 @@ object EightQueens extends SafeApp {
   }
 
   def produceSolution(boardSize: Int): State[Random, Option[Board]] =
-   initialBoard(boardSize).flatMap(board => Annealing.anneal(board, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100)))
+    initialBoard(boardSize).flatMap(board => Annealing.anneal(board, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100)))
 
   private[simann] def initialBoard(size: Int): State[Random, Board] = {
     (1 to size).toList.foldLeftM[({type M[B] = State[Random, B]})#M, Board](Board.clean(size))((b, _) => {
