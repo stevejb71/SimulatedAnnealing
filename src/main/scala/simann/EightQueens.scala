@@ -11,7 +11,11 @@ case class Board(indicesAtRow: List[Int]) extends AnyVal {
 }
 
 object Board {
-  def apply(qs: Int*): Board = Board(qs.toList)
+  def apply(qs: Int*): Board = {
+    val qsList = qs.toList
+    require(qsList.distinct.size === qsList.size)
+    Board(qsList)
+  }
   def clean(size: Int) = Board((0 until size).toList)
 
   implicit val boardHasStringRep = Show.shows((b: Board) => {
@@ -58,9 +62,8 @@ object EightQueens extends SafeApp {
   }
 
   private[simann] def initialBoard(size: Int): State[Random, Board] = {
-    (1 to size).toList.foldLeftM[({type M[B] = State[Random, B]})#M, Board](Board.clean(size))((b, _) => {
-      val annealable = implicitly[Annealable[Board]]
-      annealable.heat(b)
+    Stream.range(1, size).foldLeftM[({type M[B] = State[Random, B]})#M, Board](Board.clean(size))((b, _) => {
+      Board.boardIsAnnealable.heat(b)
     })
   }
 }
