@@ -1,8 +1,18 @@
 package simann
 
-import scalaz._, Scalaz._
+import scalaz._, Scalaz._, effect.IO
 
 case class Random(seed: Long)
+
+object Time {
+  val currentTimeMillis = IO {
+    System.currentTimeMillis()
+  }
+}
+
+object RandomIO {
+  val random: IO[Random] = Time.currentTimeMillis.map(Random(_))
+}
 
 object Random {
   val nextInt: State[Random, Int] = next(32)

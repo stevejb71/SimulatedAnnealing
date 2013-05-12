@@ -6,15 +6,12 @@ import scalaz._, Scalaz._
 
 case class Board(indicesAtRow: List[Int]) extends AnyVal {
   def size = indicesAtRow.size
-
   def swap(x: Int, y: Int) = Board(indicesAtRow.updated(x, indicesAtRow(y)).updated(y, indicesAtRow(x)))
-
   def hasQueen(row: Int, col: Int) = indicesAtRow(row) === col
 }
 
 object Board {
   def apply(qs: Int*): Board = Board(qs.toList)
-
   def clean(size: Int) = Board((0 until size).toList)
 
   implicit val boardHasStringRep = Show.shows((b: Board) => {
