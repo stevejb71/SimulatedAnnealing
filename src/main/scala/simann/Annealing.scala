@@ -24,14 +24,17 @@ object Annealing {
   }
 
   def anneal[A: Annealable](start: A, random: util.Random, temperatures: Stream[Temperature], chooseTrialOrCurrent: (A, A, Temperature) => A, stepsAtEachTemperature: Int): State[Random, Option[A]] = State {r =>
+    val trialSolutions = temperatures.map { temperature =>
+      (0 until stepsAtEachTemperature).foldLeft(start){case (current, _) => trySolution(current, temperature, chooseTrialOrCurrent, random)}
+    }
     val annealable = implicitly[Annealable[A]]
-    val trialSolutions = temperatures.map { temperature => {
-      (0 until stepsAtEachTemperature).foldLeft(start){case (current, _) => {
-        val trialSolution = annealable.heat(current, random.nextInt _)
-        chooseTrialOrCurrent(trialSolution, current, temperature)
-      }}
-    }}
     (r, trialSolutions.find(a => annealable.energy(a) === 0))
+  }
+
+  private def trySolution[A: Annealable](current: A, temperature: Temperature, chooseTrialOrCurrent: (A, A, Temperature) => A, random: util.Random) = {
+    val annealable = implicitly[Annealable[A]]
+    val trialSolution = annealable.heat(current, random.nextInt _)
+    chooseTrialOrCurrent(trialSolution, current, temperature)
   }
 
   def choose[A](trialSolution: A, current: A, acceptanceProbability: Double => Double, nextDouble: () => Double, energy: A => Double): A = {
