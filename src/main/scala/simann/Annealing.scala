@@ -21,10 +21,10 @@ object Annealing {
   }
 
   def anneal[A: Annealable](start: A, temperatures: Stream[Temperature], stepsAtEachTemperature: Int): State[Random, Option[A]] = {
-    val trialSolutions: List[State[Random, A]] = temperatures.map { temperature =>
+    val trialSolutions: Stream[State[Random, A]] = temperatures.map { temperature =>
       (0 until stepsAtEachTemperature).toList.foldLeftM[({type M[B] = State[Random, B]})#M, A](start){case (current, _) => testTrialSolution(current, temperature)}
-    }.toList
-    val sequenced: State[Random, List[A]] = trialSolutions.sequenceU
+    }
+    val sequenced = trialSolutions.sequenceU
     val annealable = implicitly[Annealable[A]]
     sequenced.map(_.find(a => annealable.energy(a) === 0))
   }
