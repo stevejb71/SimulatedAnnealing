@@ -5,7 +5,7 @@ import scalaz._, Scalaz._
 case class Random(seed: Long)
 
 object Random {
-  def nextInt: State[Random, Int] = next(32)
+  val nextInt: State[Random, Int] = next(32)
 
   def nextInt(n: Int): State[Random, Int] = {
     if (n <= 0) {
@@ -29,7 +29,7 @@ object Random {
     }
   }
 
-  def nextDouble: State[Random, Double] = for {
+  val nextDouble: State[Random, Double] = for {
     n26 <- next(26).map(i => (i.asInstanceOf[Long] << 27))
     n27 <- next(27)
   } yield ((n26 + n27) / (1L << 53).asInstanceOf[Double])
