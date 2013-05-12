@@ -61,9 +61,5 @@ object EightQueens extends SafeApp {
     solution
   }
 
-  private[simann] def initialBoard(size: Int): State[Random, Board] = {
-    Stream.range(1, size).foldLeftM[({type M[B] = State[Random, B]})#M, Board](Board.clean(size))((b, _) => {
-      Board.boardIsAnnealable.heat(b)
-    })
-  }
+  private[simann] def initialBoard(size: Int): State[Random, Board] = Annealing.loopS(Board.clean(size))(size, Board.boardIsAnnealable.heat _)
 }
