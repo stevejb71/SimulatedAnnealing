@@ -16,7 +16,7 @@ object Board {
     require(qsList.distinct.size === qsList.size)
     Board(qsList)
   }
-  def clean(size: Int) = Board((0 until (size-1)).toList)
+  def clean(size: Int) = Board((0 until size).toList)
 
   implicit val boardHasStringRep = Show.shows((b: Board) => {
     val blankRow = List.fill(b.size)('.')
@@ -57,7 +57,8 @@ object EightQueens extends SafeApp {
 
   def produceSolution(boardSize: Int): State[Random, Option[Board]] = for {
     board <- initialBoard(boardSize)
-    solution <- Annealing.anneal(board, AnnealingConfig(Temperature(30.0), Temperature(0.5), 0.99, 100))
+    temperatures = Annealing.temperatures(Temperature(50.0), Temperature(0.5), 0.99)
+    solution <- Annealing.anneal(board, temperatures, 1000)
   } yield {
     solution
   }

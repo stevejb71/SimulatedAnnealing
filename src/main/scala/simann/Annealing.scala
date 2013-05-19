@@ -12,8 +12,6 @@ case class Temperature(value: Double) extends AnyVal {
   def *(x: Double) = Temperature(value * x)
 }
 
-case class AnnealingConfig(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double, stepsAtEachTemperature: Int)
-
 object Looping {
   def loopM[F[_], A](start: A)(size: Int, f: A => F[A])(implicit M: Monad[F]): F[A] = size match {
     case 0 => M.pure(start)
@@ -24,17 +22,14 @@ object Looping {
 }
 
 object Annealing {
-  def anneal[A: Annealable](start: A, config: AnnealingConfig): State[Random, Option[A]] = {
-    val temperatures = unfold(config.initialTemperature)(t => (t.value > config.finalTemperature.value) ? (t, (t * config.temperatureDropRatio)).some | None)
-    anneal(start, temperatures, config.stepsAtEachTemperature)
-  }
-
-  def anneal[A: Annealable](start: A, temperatures: Stream[Temperature], stepsAtEachTemperature: Int): State[Random, Option[A]] = {
-    val trialSolutions: Stream[State[Random, A]] = temperatures.map { temperature => Looping.loopS(start)(stepsAtEachTemperature, testTrialSolution(temperature) _) }
+  def anneal[A](start: A, temperatures: List[Temperature], stepsAtEachTemperature: Int)(implicit annealable: Annealable[A]): State[Random, Option[A]] = {
+    val trialSolutions: List[State[Random, A]] = temperatures.map { temperature => Looping.loopS(start)(stepsAtEachTemperature, testTrialSolution(temperature) _) }
     val sequenced = trialSolutions.sequenceU
-    val annealable = implicitly[Annealable[A]]
     sequenced.map(_.find(a => annealable.energy(a) === 0))
   }
+
+  def temperatures(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double): List[Temperature] =
+    unfold(initialTemperature)(t => (t.value > finalTemperature.value) ? (t, (t * temperatureDropRatio)).some | None).toList
 
   private def acceptanceProbability(temperature: Temperature) = (d: Double) => math.exp(-d / temperature.value)
 
