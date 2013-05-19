@@ -22,14 +22,14 @@ object Looping {
 }
 
 object Annealing {
-  def anneal[A](start: A, temperatures: List[Temperature], stepsAtEachTemperature: Int)(implicit annealable: Annealable[A]): State[Random, Option[A]] = {
-    val trialSolutions: List[State[Random, A]] = temperatures.map { temperature => Looping.loopS(start)(stepsAtEachTemperature, testTrialSolution(temperature) _) }
+  def anneal[A](start: A, temperatures: Stream[Temperature], stepsAtEachTemperature: Int)(implicit annealable: Annealable[A]): State[Random, Option[A]] = {
+    val trialSolutions: Stream[State[Random, A]] = temperatures.map { temperature => Looping.loopS(start)(stepsAtEachTemperature, testTrialSolution(temperature) _) }
     val sequenced = trialSolutions.sequenceU
     sequenced.map(_.find(a => annealable.energy(a) === 0))
   }
 
-  def temperatures(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double): List[Temperature] =
-    unfold(initialTemperature)(t => (t.value > finalTemperature.value) ? (t, (t * temperatureDropRatio)).some | None).toList
+  def temperatures(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double): Stream[Temperature] =
+    unfold(initialTemperature)(t => (t.value > finalTemperature.value) ? (t, (t * temperatureDropRatio)).some | None)
 
   private def acceptanceProbability(temperature: Temperature) = (d: Double) => math.exp(-d / temperature.value)
 
