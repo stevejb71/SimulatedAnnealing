@@ -15,8 +15,10 @@ case class Temperature(value: Double) extends AnyVal {
 case class AnnealingConfig(initialTemperature: Temperature, finalTemperature: Temperature, temperatureDropRatio: Double, stepsAtEachTemperature: Int)
 
 object Looping {
-  def loopM[F[_], A](start: A)(size: Int, f: A => F[A])(implicit M: Monad[F]): F[A] =
-    Stream.range(0, size).foldLeftM[F, A](start)((b, _) => f(b))
+  def loopM[F[_], A](start: A)(size: Int, f: A => F[A])(implicit M: Monad[F]): F[A] = size match {
+    case 0 => M.pure(start)
+    case n => loopM(start)(n - 1, f).flatMap(f)
+  }
 
   def loopS[S, A](start: A)(size: Int, f: A => State[S, A]): State[S, A] = loopM[({type M[B] = State[S, B]})#M, A](start)(size, f)
 }

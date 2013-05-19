@@ -20,7 +20,7 @@ object Random {
       throw new IllegalArgumentException("n must be positive")
     }
     if ((n & -n) === n) {
-      next(31).map((n: Int) => ((n * next(31).asInstanceOf[Long]) >> 31).asInstanceOf[Int])
+      next(31).map((nxt: Int) => ((n * nxt.asInstanceOf[Long]) >> 31).asInstanceOf[Int])
     } else {
       lazy val loop: State[Random, Int] = {
         val bits = next(31)

@@ -16,7 +16,7 @@ object Board {
     require(qsList.distinct.size === qsList.size)
     Board(qsList)
   }
-  def clean(size: Int) = Board((0 until size).toList)
+  def clean(size: Int) = Board((0 until (size-1)).toList)
 
   implicit val boardHasStringRep = Show.shows((b: Board) => {
     val blankRow = List.fill(b.size)('.')
@@ -48,9 +48,10 @@ object Board {
 }
 
 object EightQueens extends SafeApp {
-  override def runc: IO[Unit] = for {
+  override def runl(args: List[String]): IO[Unit] = for {
     random <- RandomIO.random
-    result = produceSolution(8).eval(random)
+    boardSize = args.lift(0).map(_.toInt).getOrElse(8)
+    result = produceSolution(boardSize).eval(random)
     _ <- putStrLn(result.map(_.shows).getOrElse("No solution found"))
   } yield ()
 
