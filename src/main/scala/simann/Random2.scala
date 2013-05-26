@@ -63,4 +63,7 @@ object Namespace {
       (next27._1, (next26._2 + next27._2) / (1L << 53).asInstanceOf[Double])
     }
   }
+
+  def MonadRandomT[M[+_], A](lo: A, hi: A)(g: RandomGen)(implicit R: Random[A], M: Monad[M]) = StateT((g: RandomGen) => M.pure(R.randomR(lo, hi)(g)))
+  def MonadRandom[A: Random](lo: A, hi: A)(g: RandomGen) = MonadRandomT[Identity, A](lo, hi)(g)
 }
