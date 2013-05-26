@@ -7,8 +7,10 @@ import simann.Namespace._
 class RandomSpec extends Specification {
   val seed = 55
   val count = 100
-  val stdGen = StdGen.scramble(seed)
-  def scalaValues[A](lo: A, hi: A)(implicit R: Namespace.Random[A]) = (0 until count).toList.traverseU(_ => State(R.randomR(lo, hi) _)).eval(stdGen)
+  def scalaValues[A](lo: A, hi: A)(implicit R: Namespace.Random[A]) = {
+    val stdGen = StdGen.scramble(seed)
+    (0 until count).toList.traverseU(_ => State(R.randomR(lo, hi) _)).eval(stdGen)
+  }
   def javaValues[A](f: java.util.Random => A) = {
     val javaRandom = new java.util.Random(seed)
     (0 until count).map(_ => f(javaRandom)).toList
