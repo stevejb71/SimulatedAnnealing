@@ -43,7 +43,7 @@ object Namespace {
         var g2 = g
         var bits = 0
         do {
-          val nextRnd = g2.next(31)   // (1566086245,StdGen(205270056366173))
+          val nextRnd = g2.next(31)
           g2 = nextRnd._1
           bits = nextRnd._2
           value = bits % n
@@ -55,8 +55,12 @@ object Namespace {
   }
 
   implicit val randomDouble = new Random[Double] {
-    def randomR(lo: Double, hi: Double)(g: RandomGen) = ???
-
-    def random(g: RandomGen) = ???
+    def randomR(lo: Double, hi: Double)(g: RandomGen) = (lo + (hi - lo) * (_: Double)).second(uniform(g))
+    def random(g: RandomGen) = randomR(Double.MinValue, Double.MaxValue)(g)
+    private[this] def uniform(g: RandomGen): (RandomGen, Double) = {
+      val next26 = ((_:Int).asInstanceOf[Long] << 27).second(g.next(26))
+      val next27 = next26._1.next(27)
+      (next27._1, (next26._2 + next27._2) / (1L << 53).asInstanceOf[Double])
+    }
   }
 }
