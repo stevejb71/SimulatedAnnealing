@@ -5,23 +5,20 @@ import scalaz._, Scalaz._
 import simann.Namespace._
 
 class RandomSpec extends Specification {
-  "Random int the same as Java" in {
-    val seed = 55
-    val count = 100
-
-    val scalaRandom = randomInt.randomR(0, 1000) _
-    var stdGen: RandomGen = StdGen.scramble(seed)
-    val scalaValues = (0 until count).map {_ =>
-      val state: (Int, RandomGen) = scalaRandom(stdGen)
-      stdGen = state._2
-      state._1
-    }.toList
-
+  val seed = 55
+  val count = 100
+  val stdGen = StdGen.scramble(seed)
+  def scalaValues[A](lo: A, hi: A)(implicit R: Namespace.Random[A]) = (0 until count).toList.traverseU(_ => State(R.randomR(lo, hi) _)).eval(stdGen)
+  def javaValues[A](f: java.util.Random => A) = {
     val javaRandom = new java.util.Random(seed)
-    val javaValues = (0 until count).map {_ =>
-      javaRandom.nextInt(1000)
-    }.toList
+    (0 until count).map(_ => f(javaRandom)).toList
+  }
 
-    scalaValues must be_===(javaValues)
+  "Random int the same as Java" in {
+    scalaValues(0, 1000) must be_===(javaValues(_.nextInt(1000)))
+  }
+
+  "Random boolean the same as Java" in {
+    scalaValues(false, true) must be_===(javaValues(_.nextBoolean))
   }
 }
